@@ -37,10 +37,14 @@ public final class TelegramRequestExecutor {
     }
 
     public static <T> T postJson(CloseableHttpClient httpClient, String url, Map<String, Object> payload,
-            Class<T> responseType) throws JsonProcessingException {
+            Class<T> responseType) throws TelegramApiException, TelegramHttpException {
         HttpPost request = new HttpPost(url);
         request.setHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON);
-        request.setEntity(new StringEntity(JsonUtils.toJson(payload), StandardCharsets.UTF_8));
+        try {
+            request.setEntity(new StringEntity(JsonUtils.toJson(payload), StandardCharsets.UTF_8));
+        } catch (JsonProcessingException e) {
+            throw new TelegramApiException("Failed to serialize request payload: " + e.getMessage());
+        }
         return execute(httpClient, request, responseType);
     }
 

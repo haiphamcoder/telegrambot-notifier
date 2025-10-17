@@ -1,5 +1,7 @@
 package io.github.haiphamcoder.telegrambot.notifier.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Represents the {@code chat_id} parameter used by the Telegram Bot API.
  * <p>
@@ -30,6 +32,10 @@ public sealed interface ChatId permits ChatId.LongId, ChatId.Username {
      * pass the value as provided by Telegram without modification.
      */
     record LongId(long value) implements ChatId {
+        @Override
+        public String getValue() {
+            return String.valueOf(value);
+        }
     }
 
     /**
@@ -38,6 +44,10 @@ public sealed interface ChatId permits ChatId.LongId, ChatId.Username {
      * The value should include the leading {@code @} to comply with the Bot API.
      */
     record Username(String value) implements ChatId {
+        @Override
+        public String getValue() {
+            return value;
+        }
     }
 
     /**
@@ -62,5 +72,8 @@ public sealed interface ChatId permits ChatId.LongId, ChatId.Username {
     static ChatId of(String username) {
         return new Username(username);
     }
+
+    @JsonValue
+    String getValue();
 
 }
