@@ -9,4 +9,8 @@ public interface TelegramNotifierClient extends AutoCloseable {
 
     MessageResponse sendMessage(SendMessageRequest request) throws TelegramApiException, TelegramHttpException;
 
+    @Override
+    default void close() {
+        // default no-op; implementations may override and need not throw checked exceptions
+    }
 }

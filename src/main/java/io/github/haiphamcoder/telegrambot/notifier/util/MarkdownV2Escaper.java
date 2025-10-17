@@ -65,6 +65,12 @@ public final class MarkdownV2Escaper {
         int i = 0;
         
         while (i < text.length()) {
+            // Preserve already escaped specials: \\ + special
+            if (text.charAt(i) == '\\' && i + 1 < text.length() && isSpecialChar(text.charAt(i + 1))) {
+                result.append('\\').append(text.charAt(i + 1));
+                i += 2;
+                continue;
+            }
             EntityMatch match = findEntity(text, i);
             if (match != null) {
                 result.append(match.content);

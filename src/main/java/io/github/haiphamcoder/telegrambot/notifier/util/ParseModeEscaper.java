@@ -34,11 +34,8 @@ public final class ParseModeEscaper {
             return text;
         }
 
-        return switch (parseMode) {
-            case MARKDOWN -> MarkdownEscaper.escape(text);
-            case MARKDOWN_V2 -> MarkdownV2Escaper.escape(text);
-            case HTML -> HtmlEscaper.escape(text);
-        };
+        // Prefer entity-preserving escaping to avoid double-escaping
+        return escapePreservingEntities(text, parseMode);
     }
 
     /**
@@ -80,8 +77,9 @@ public final class ParseModeEscaper {
         }
 
         return switch (parseMode) {
-            case MARKDOWN -> containsMarkdownSpecialChars(text);
-            case MARKDOWN_V2 -> containsMarkdownV2SpecialChars(text);
+            case MARKDOWN -> containsMarkdownSpecialChars(unescapeAlreadyEscaped(text, '_', '*', '`', '['));
+            case MARKDOWN_V2 -> containsMarkdownV2SpecialChars(unescapeAlreadyEscaped(text,
+                    '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'));
             case HTML -> containsHtmlSpecialChars(text);
         };
     }
@@ -100,5 +98,31 @@ public final class ParseModeEscaper {
 
     private static boolean containsHtmlSpecialChars(String text) {
         return text.contains("<") || text.contains(">") || text.contains("&");
+    }
+
+    private static String unescapeAlreadyEscaped(String text, char... specials) {
+        if (text.indexOf('\\') < 0)
+            return text;
+        StringBuilder sb = new StringBuilder(text.length());
+        int index = 0;
+        while (index < text.length()) {
+            char current = text.charAt(index);
+            if (current == '\\' && index + 1 < text.length() && isOneOf(text.charAt(index + 1), specials)) {
+                // skip backslash, keep the special char as literal
+                sb.append(text.charAt(index + 1));
+                index += 2;
+            } else {
+                sb.append(current);
+                index++;
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean isOneOf(char c, char... specials) {
+        for (char s : specials)
+            if (c == s)
+                return true;
+        return false;
     }
 }

@@ -67,7 +67,7 @@ public final class DefaultTelegramNotifierClient implements TelegramNotifierClie
         String text = request.text();
         ParseMode parseMode = request.parseMode();
         if (parseMode != null && ParseModeEscaper.needsEscaping(text, parseMode)) {
-            text = ParseModeEscaper.escape(text, parseMode);
+            text = ParseModeEscaper.escapePreservingEntities(text, parseMode);
         }
         params.put("text", text);
         

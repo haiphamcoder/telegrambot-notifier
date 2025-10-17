@@ -30,6 +30,7 @@ config.properties
 .env
 .env.local
 .env.production
+.envrc
 
 # Temporary files
 *.tmp

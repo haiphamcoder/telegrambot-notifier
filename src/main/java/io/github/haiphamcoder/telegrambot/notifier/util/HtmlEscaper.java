@@ -66,16 +66,18 @@ public final class HtmlEscaper {
         while (i < text.length()) {
             char c = text.charAt(i);
             
+            if (c == '&' && isHtmlEntity(text, i)) {
+                int entityEnd = findEntityEnd(text, i);
+                result.append(text, i, entityEnd);
+                i = entityEnd;
+                continue;
+            }
+
             if (c == '<' && isHtmlTag(text, i)) {
                 // Preserve HTML tag
                 int tagEnd = findTagEnd(text, i);
                 result.append(text.substring(i, tagEnd));
                 i = tagEnd;
-            } else if (c == '&' && isHtmlEntity(text, i)) {
-                // Preserve HTML entity
-                int entityEnd = findEntityEnd(text, i);
-                result.append(text.substring(i, entityEnd));
-                i = entityEnd;
             } else if (c == '<' || c == '>' || c == '&') {
                 // Escape special character
                 result.append(escapeChar(c));

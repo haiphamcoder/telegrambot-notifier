@@ -63,39 +63,63 @@ public final class MarkdownEscaper {
         }
 
         StringBuilder result = new StringBuilder();
-        int i = 0;
-        
-        while (i < text.length()) {
-            char c = text.charAt(i);
-            
-            // Check for markdown entities
-            if (c == '*' && isBoldEntity(text, i)) {
-                // Preserve bold entity
-                result.append(extractBoldEntity(text, i));
-                i = skipBoldEntity(text, i);
-            } else if (c == '_' && isItalicEntity(text, i)) {
-                // Preserve italic entity
-                result.append(extractItalicEntity(text, i));
-                i = skipItalicEntity(text, i);
-            } else if (c == '`' && isCodeEntity(text, i)) {
-                // Preserve code entity
-                result.append(extractCodeEntity(text, i));
-                i = skipCodeEntity(text, i);
-            } else if (c == '[' && isLinkEntity(text, i)) {
-                // Preserve link entity
-                result.append(extractLinkEntity(text, i));
-                i = skipLinkEntity(text, i);
-            } else if (isSpecialChar(c)) {
-                // Escape special character
-                result.append('\\').append(c);
-                i++;
+        int index = 0;
+
+        while (index < text.length()) {
+            char current = text.charAt(index);
+
+            // Case 1: already escaped special ("\\" + special)
+            if (current == '\\' && index + 1 < text.length() && isSpecialChar(text.charAt(index + 1))) {
+                result.append('\\').append(text.charAt(index + 1));
+                index += 2;
             } else {
-                result.append(c);
-                i++;
+                // Case 2: existing entity
+                EntityMatch match = findEntity(text, index);
+                if (match != null) {
+                    result.append(match.content);
+                    index = match.nextIndex;
+                } else {
+                    // Case 3: escape special or append normal char
+                    if (isSpecialChar(current)) {
+                        result.append('\\').append(current);
+                    } else {
+                        result.append(current);
+                    }
+                    index++;
+                }
             }
         }
-        
+
         return result.toString();
+    }
+
+    private static class EntityMatch {
+        final String content;
+        final int nextIndex;
+
+        EntityMatch(String content, int nextIndex) {
+            this.content = content;
+            this.nextIndex = nextIndex;
+        }
+    }
+
+    private static EntityMatch findEntity(String text, int start) {
+        char c = text.charAt(start);
+        return switch (c) {
+            case '*' -> isBoldEntity(text, start)
+                    ? new EntityMatch(extractBoldEntity(text, start), skipBoldEntity(text, start))
+                    : null;
+            case '_' -> isItalicEntity(text, start)
+                    ? new EntityMatch(extractItalicEntity(text, start), skipItalicEntity(text, start))
+                    : null;
+            case '`' -> isCodeEntity(text, start)
+                    ? new EntityMatch(extractCodeEntity(text, start), skipCodeEntity(text, start))
+                    : null;
+            case '[' -> isLinkEntity(text, start)
+                    ? new EntityMatch(extractLinkEntity(text, start), skipLinkEntity(text, start))
+                    : null;
+            default -> null;
+        };
     }
     
     private static boolean isBoldEntity(String text, int start) {
