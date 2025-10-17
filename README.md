@@ -77,3 +77,32 @@ SendMessageRequest request = SendMessageRequest.builder()
 
 MessageResponse response = client.sendMessage(request);
 ```
+
+## Requirements
+
+- Java 17 or higher
+- Apache HttpClient 5.5.1+
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Author
+
+***Hai Pham Ngoc***
+
+- GitHub: [@haiphamcoder](https://github.com/haiphamcoder)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history and release notes.
