@@ -70,6 +70,17 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase:  ${{ secrets.GPG_PASSPHRASE }}
 
+      - name: Configure GPG (loopback pinentry)
+        run: |
+          export GPG_TTY=$(tty)
+          echo "GPG_TTY=$GPG_TTY" >> $GITHUB_ENV
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          printf 'pinentry-mode loopback\n' >> ~/.gnupg/gpg.conf
+          printf 'allow-loopback-pinentry\n' >> ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent || true
+          gpgconf --launch gpg-agent
+
       - name: Export Maven GPG passphrase
         run: echo "MAVEN_GPG_PASSPHRASE=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
 
@@ -100,17 +111,21 @@ jobs:
       - name: Build (skip deploy for dry_run)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
         run: |
-          mvn $MAVEN_CLI_OPTS -Dgpg.skip=false -DskipTests=false verify $MAVEN_RELEASE_MODULES
+          mvn $MAVEN_CLI_OPTS -Dgpg.executable=gpg \
+            -Dgpg.arguments=--batch,--yes,--pinentry-mode,loopback \
+            -Dgpg.skip=false -DskipTests=false verify $MAVEN_RELEASE_MODULES
 
       - name: Deploy to Sonatype Central
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true') }}
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          # Ensure sources/javadoc/signing are attached via plugins configured in parent POM
-          mvn $MAVEN_CLI_OPTS -DskipTests=true -Dgpg.executable=gpg -Dgpg.passphrase="${GPG_PASSPHRASE}" deploy $MAVEN_RELEASE_MODULES
+          # Ensure sources/javadoc/signing are attached via plugins configured in POM
+          mvn $MAVEN_CLI_OPTS -DskipTests=true \
+            -Dgpg.executable=gpg \
+            -Dgpg.arguments=--batch,--yes,--pinentry-mode,loopback \
+            deploy $MAVEN_RELEASE_MODULES
 
       - name: Attach artifacts (optional) - upload surefire & javadoc
         if: always()
